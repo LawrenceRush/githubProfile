@@ -1,57 +1,44 @@
 const axios = require("axios");
-const $ = require("jquery")
-const fetch = require("node-fetch");
+const inquirer = require("inquirer");
+const genHtml = require("./generateHTML")
+const gen = genHtml.generateHTML;
+const color = genHtml.colors;
 const ghProfile = {}
-axios
-  .get(githubQuery())
+const fs = require("fs");
+const util = require("util");
+
+const writeFileAsync = util.promisify(fs.writeFile);
+
+
+
+async function getData(x){
+  try{
+  axios
+  .get(githubQuery(x.username))
   .then((res) => {
    const data = res.data
-   //console.log(data)
+  
     assignEasyProperties(data)
-    console.log(data.repos_url)
-    console.log(data.starred_url.slice(0,-15))
     return axios.all([
         axios.get(data.repos_url),
         axios.get(data.starred_url.slice(0,-15))
-      ])
+      ]).catch(err => {
+        console.log("Sad")
+      })
 })
    .then((responseArr) => {
     ghProfile.pubRepos = (responseArr[0].data.length);
     ghProfile.starredRepos= (responseArr[1].data.length);
-    console.log (ghProfile)
+    const html = gen(x.color, ghProfile);
+    return writeFileAsync("index.html", html);
       })
-
-    // axios
-    // .get(data.starred_url)
-    // .then((starred) => {
-    // ghProfile.starredNum = starred.data.length
-    // console.log(ghProfile)
-    //   })
-     
-
-// axios
-//     .get(ghdata.repos_url)
-//     .then((repos) => {
-//         ghProfile.repoNum = repos.data.length
-//       console.log(ghProfile)
-//       })
-//       return data
-    
-    //  .then((data)=>{
+    }
+   catch(err) {
+     console.log("sad")
+    console.error(err)
+  }
+}
    
-//   })
-   
-   
-  
-
-//   promise = fetch(githubQuery())
-//   promise.then(function (response){
-    //     return response.json();
-//   }
-//   ).then(json => console.log(json))
-
-
-
 
 function assignEasyProperties(data){
     ghProfile.avatar = data.avatar_url;
@@ -64,9 +51,33 @@ function assignEasyProperties(data){
     ghProfile.following = data.following;
 }
 
-function githubQuery() {
-username = "jasonwilliams"
-const queryUrl = `https://api.github.com/users/${username}?per_page=100`;
+function githubQuery(userName) {
+const queryUrl = `https://api.github.com/users/${userName}?per_page=100`;
+
 return queryUrl 
 }
 
+function runInquier(){
+inquirer
+  .prompt([
+    /* Pass your questions in here */
+    {
+      type: 'list',
+    name: 'color',
+    message: 'What is your favorite color?',
+    choices: ['green', 'blue','pink', 'red']
+    },
+    {
+    name: "username",
+    message: 'what is your github username?'
+    }
+  ])
+  .then(answers => {
+    // Use user feedback for... whatever!!
+    getData(answers)
+    
+  });
+}
+
+
+runInquier();
