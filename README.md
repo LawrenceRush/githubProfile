@@ -1,2 +1,3 @@
 # githubProfile
-<img src="./profileGenerator.gif" width="250" height="250" />
+
+<img src="./profileGeneratorGif.gif" width="250" height="250" />
